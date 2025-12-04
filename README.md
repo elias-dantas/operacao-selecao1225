@@ -86,3 +86,21 @@ _Você tem permissão para criar um bucket S3. Use se achar necessário. O nome 
 **Lembre-se:** o foco da nossa avaliação é o seu raciocínio. Se não souber alguma resposta, não se preocupe. Foque em explicar bem o que você conhece. O Diário de Bordo é a principal sessão da sua documentação!
 
 Boa sorte!
+
+---
+
+## Decision Log
+
+### Problema de Rede
+O código original rodava com `host='127.0.0.1'`, o que limita o Flask a aceitar apenas conexões locais (loopback). Isso **impede acesso externo**, tanto de outros containers quanto da internet. A solução foi alterar para `host='0.0.0.0'`, permitindo escuta em todas as interfaces de rede — padrão para aplicações em containers.
+
+### Melhorias de Segurança (se houvesse mais tempo)
+1. **Não escrever logs em arquivo dentro do container**: migrar logs para `stdout` e usar CloudWatch Logs via Fluent Bit.
+2. **Usar IAM Roles para EC2**, não chaves de acesso.
+3. **Imagem em ECR com scanning habilitado**.
+4. **Hardening do Ubuntu**: CIS Benchmark, fail2ban, remoção de pacotes desnecessários.
+5. **TLS/HTTPS** com ALB + ACM.
+6. **Isolar instância em sub-rede privada** com NAT Gateway (não expor diretamente à internet).
+
+### Reflexão sobre o Desafio
+O cenário reflete desafios comuns em sistemas legados: código não preparado para a nuvem, logs mal gerenciados e deploy manual. A solução foi evolutiva: containerizar com alterações mínimas, garantir recuperação automática e usar infraestrutura declarativa com Terraform. O script de monitoramento serve como solução temporária até que uma observabilidade completa (como CloudWatch ou Prometheus) seja implantada. O principal aprendizado: infraestrutura moderna só funciona bem se a aplicação colaborar — com logs em stdout, health checks e boas práticas para nuvem.
